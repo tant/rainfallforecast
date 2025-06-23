@@ -85,19 +85,26 @@ X_val, y_val = create_sequences(val_scaled, LOOKBACK, TARGET_COL_INDEX)
 X_test, y_test = create_sequences(test_scaled, LOOKBACK, TARGET_COL_INDEX)
 
 # ==============================================================================
-# BƯỚC 5: XÂY DỰNG MÔ HÌNH
+# BƯỚC 5: XÂY DỰNG MÔ HÌNH (Kiến trúc 2 lớp LSTM)
 # ==============================================================================
 print("\nBắt đầu Bước 5: Xây dựng mô hình LSTM...")
 n_features = X_train.shape[2]
+
 model = Sequential([
-    LSTM(units=64, input_shape=(LOOKBACK, n_features)),
-    Dropout(0.2),
-    # *** THAY ĐỔI CUỐI CÙNG: Thêm hàm kích hoạt 'relu' để đảm bảo đầu ra không âm ***
+    # LSTM thứ nhất: trả về chuỗi cho lớp sau, có recurrent_dropout
+    LSTM(units=64, recurrent_dropout=0.25, return_sequences=True, input_shape=(LOOKBACK, n_features)),
+    Dropout(0.3),
+    # LSTM thứ hai: chỉ trả về kết quả cuối cùng
+    LSTM(units=32, recurrent_dropout=0.25),
+    Dropout(0.3),
     Dense(1, activation='relu')
 ])
-model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
+
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
 model.summary()
-model_architecture = "LSTM(64) + Dropout(0.2) + Dense(1, activation='relu') + LogTransform"
+
+# Cập nhật lại thông tin kiến trúc để lưu vào báo cáo
+model_architecture = "LSTM(64,recurrent_dropout=0.25,return_seq=True) + Dropout(0.3) + LSTM(32,recurrent_dropout=0.25) + Dropout(0.3) + Dense(1,relu) + LogTransform"
 optimizer_info = "Adam"
 learning_rate = 0.001
 
