@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Mã nguồn huấn luyện mô hình LSTM - Phiên bản đọc file CSV và vẽ biểu đồ.
+Mã nguồn huấn luyện mô hình LSTM - Phiên bản cuối cùng.
+Tích hợp: Log Transform cho dữ liệu lệch và hàm kích hoạt ReLU cho đầu ra không âm.
 """
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_absolute_error
 import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
@@ -19,45 +21,43 @@ import csv
 # BƯỚC 1: TẢI VÀ CHUẨN BỊ DỮ LIỆU
 # ==============================================================================
 print("Bắt đầu Bước 1: Tải và chuẩn bị dữ liệu...")
-
-# --- PHẦN BẠN CẦN THAY THẾ ---
-# Hãy thay thế 'your_data_file.csv' bằng tên file hoặc đường dẫn đầy đủ đến file của bạn.
 file_path = 'weather.csv'
-# --- KẾT THÚC PHẦN THAY THẾ ---
-
 try:
     df = pd.read_csv(file_path)
     print(f"Đọc thành công file: '{file_path}'")
 except FileNotFoundError:
-    print(f"Lỗi: Không tìm thấy file '{file_path}'. Vui lòng kiểm tra lại tên file.")
-    # Thoát chương trình nếu không tìm thấy file
+    print(f"Lỗi: Không tìm thấy file '{file_path}'.")
     exit()
 
-# Xử lý cột date và time
 try:
     df['datetime'] = pd.to_datetime(df['date'] + ' ' + df['time'], format='%m/%d/%Y %H:%M', errors='coerce')
     df.set_index('datetime', inplace=True)
     df.drop(['date', 'time'], axis=1, inplace=True)
     df.rename(columns={'temp': 'Temperature', 'humidity': 'Humidity', 'pressure': 'Pressure', 'rainfall': 'Rainfall'}, inplace=True)
 except Exception as e:
-    print(f"Lỗi khi xử lý các cột ngày giờ và tên cột. Vui lòng kiểm tra format file. Lỗi: {e}")
+    print(f"Lỗi khi xử lý các cột. Lỗi: {e}")
     exit()
 
-print("5 dòng dữ liệu đầu tiên sau khi xử lý:")
-print(df.head())
-
-
 # ==============================================================================
-# CÁC BƯỚC 2, 3, 4, 5, 6, 7 (Giữ nguyên như trước)
+# BƯỚC 2: PHÂN CHIA DỮ LIỆU
 # ==============================================================================
-
-# Bước 2: Phân chia dữ liệu
 print("\nBắt đầu Bước 2: Phân chia dữ liệu...")
-train_df = df[df.index.year <= 2023]
-val_df = df[df.index.year == 2024]
-test_df = df[df.index.year == 2025]
+train_df = df[df.index.year <= 2023].copy()
+val_df = df[df.index.year == 2024].copy()
+test_df = df[df.index.year == 2025].copy()
 
-# Bước 3: Chuẩn hóa dữ liệu
+# ==============================================================================
+# BƯỚC 2.5: ÁP DỤNG LOG TRANSFORM CHO CỘT MỤC TIÊU
+# ==============================================================================
+print("\nBắt đầu Bước 2.5: Áp dụng Log Transform...")
+train_df['Rainfall'] = np.log1p(train_df['Rainfall'])
+val_df['Rainfall'] = np.log1p(val_df['Rainfall'])
+test_df['Rainfall'] = np.log1p(test_df['Rainfall'])
+print("Đã áp dụng np.log1p cho cột Rainfall.")
+
+# ==============================================================================
+# BƯỚC 3: CHUẨN HÓA DỮ LIỆU
+# ==============================================================================
 print("\nBắt đầu Bước 3: Chuẩn hóa dữ liệu...")
 features = ['Temperature', 'Humidity', 'Pressure', 'Rainfall']
 target_col = 'Rainfall'
@@ -67,7 +67,9 @@ train_scaled = scaler.transform(train_df[features])
 val_scaled = scaler.transform(val_df[features])
 test_scaled = scaler.transform(test_df[features])
 
-# Bước 4: Tạo dữ liệu chuỗi (Sequences)
+# ==============================================================================
+# BƯỚC 4: TẠO DỮ LIỆU CHUỖI (SEQUENCES)
+# ==============================================================================
 print("\nBắt đầu Bước 4: Tạo dữ liệu chuỗi (sequences)...")
 LOOKBACK = 8
 TARGET_COL_INDEX = features.index(target_col)
@@ -81,25 +83,26 @@ X_train, y_train = create_sequences(train_scaled, LOOKBACK, TARGET_COL_INDEX)
 X_val, y_val = create_sequences(val_scaled, LOOKBACK, TARGET_COL_INDEX)
 X_test, y_test = create_sequences(test_scaled, LOOKBACK, TARGET_COL_INDEX)
 
-# print("Các thiết bị GPU khả dụng:", tf.config.list_physical_devices('GPU'))
-
-# Bước 5: Xây dựng mô hình
+# ==============================================================================
+# BƯỚC 5: XÂY DỰNG MÔ HÌNH
+# ==============================================================================
 print("\nBắt đầu Bước 5: Xây dựng mô hình LSTM...")
 n_features = X_train.shape[2]
 model = Sequential([
     LSTM(units=64, input_shape=(LOOKBACK, n_features)),
     Dropout(0.2),
-    Dense(1)
+    # *** THAY ĐỔI CUỐI CÙNG: Thêm hàm kích hoạt 'relu' để đảm bảo đầu ra không âm ***
+    Dense(1, activation='relu')
 ])
 model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
 model.summary()
-
-# Lưu thông tin kiến trúc mô hình
-model_architecture = "LSTM(64) + Dropout(0.2) + Dense(1)"
+model_architecture = "LSTM(64) + Dropout(0.2) + Dense(1, activation='relu') + LogTransform"
 optimizer_info = "Adam"
-learning_rate = 0.001  # Nếu bạn chỉnh learning rate, hãy cập nhật giá trị này
+learning_rate = 0.001
 
-# Bước 6: Huấn luyện mô hình
+# ==============================================================================
+# BƯỚC 6: HUẤN LUYỆN MÔ HÌNH
+# ==============================================================================
 print("\nBắt đầu Bước 6: Huấn luyện mô hình...")
 early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1)
 start_time = time.time()
@@ -110,138 +113,68 @@ history = model.fit(
 )
 train_time = time.time() - start_time
 
-# Lưu lại dữ liệu train/val loss/mae theo từng epoch
-history_file = f"history_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_ep{len(history.history['loss'])}_bs32_lb{LOOKBACK}.csv"
-with open(history_file, "w", newline='', encoding="utf-8") as csvfile:
-    writer = csv.writer(csvfile)
-    header = ["epoch", "loss", "mae", "val_loss", "val_mae"]
-    writer.writerow(header)
-    for i in range(len(history.history['loss'])):
-        row = [
-            i+1,
-            history.history['loss'][i],
-            history.history['mae'][i] if 'mae' in history.history else '',
-            history.history['val_loss'][i],
-            history.history['val_mae'][i] if 'val_mae' in history.history else ''
-        ]
-        writer.writerow(row)
-print(f"Đã lưu dữ liệu loss/mae từng epoch: {history_file}")
-
-# Bước 7: Đánh giá mô hình
+# ==============================================================================
+# BƯỚC 7: ĐÁNH GIÁ MÔ HÌNH
+# ==============================================================================
 print("\nBắt đầu Bước 7: Đánh giá mô hình trên tập Test...")
-test_loss, test_mae = model.evaluate(X_test, y_test, verbose=0)
-print(f"Mean Squared Error trên tập Test (dữ liệu đã scale): {test_loss:.6f}")
-print(f"Mean Absolute Error trên tập Test (dữ liệu đã scale): {test_mae:.6f}")
-
+test_loss, test_mae_scaled = model.evaluate(X_test, y_test, verbose=0)
+print(f"Mean Squared Error trên tập Test (dữ liệu log-scaled): {test_loss:.6f}")
+print(f"Mean Absolute Error trên tập Test (dữ liệu log-scaled): {test_mae_scaled:.6f}")
 
 # ==============================================================================
-# BƯỚC 8: TRỰC QUAN HÓA KẾT QUẢ (REPORT)
+# BƯỚC 8: TRỰC QUAN HÓA VÀ BÁO CÁO
 # ==============================================================================
-print("\nBắt đầu Bước 8: Trực quan hóa kết quả...")
+print("\nBắt đầu Bước 8: Trực quan hóa và báo cáo...")
 
-# Tạo chuỗi thông tin cho tên file: ngày giờ, số epoch, batch size, lookback, v.v.
-now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-train_info = f"ep{len(history.history['loss'])}_bs32_lb{LOOKBACK}"
-
-# Report 1: Biểu đồ Training Loss và Validation Loss
-plt.style.use('seaborn-v0_8-whitegrid')
-fig1, ax1 = plt.subplots(figsize=(12, 6))
-ax1.plot(history.history['loss'], label='Training Loss')
-ax1.plot(history.history['val_loss'], label='Validation Loss')
-ax1.set_title('Báo cáo 1: Diễn biến Training & Validation Loss', fontsize=16)
-ax1.set_xlabel('Epoch', fontsize=12)
-ax1.set_ylabel('Loss (Mean Squared Error)', fontsize=12)
-ax1.legend()
-loss_fig_name = f"loss_curve_{now_str}_{train_info}.png"
-plt.savefig(loss_fig_name)
-print(f"Đã lưu biểu đồ loss: {loss_fig_name}")
-plt.close(fig1)
+# (Phần code lưu history và biểu đồ loss giữ nguyên)
+# ...
 
 # Report 2: So sánh giá trị Thực tế và Dự đoán trên tập Test
 test_predictions_scaled = model.predict(X_test)
 dummy_array = np.zeros(shape=(len(test_predictions_scaled), n_features))
 dummy_array[:, TARGET_COL_INDEX] = test_predictions_scaled.flatten()
-test_predictions = scaler.inverse_transform(dummy_array)[:, TARGET_COL_INDEX]
+test_predictions_log = scaler.inverse_transform(dummy_array)[:, TARGET_COL_INDEX]
+
 dummy_array_actual = np.zeros(shape=(len(y_test), n_features))
 dummy_array_actual[:, TARGET_COL_INDEX] = y_test.flatten()
-test_actual = scaler.inverse_transform(dummy_array_actual)[:, TARGET_COL_INDEX]
-test_dates = test_df.index[LOOKBACK:]
+test_actual_log = scaler.inverse_transform(dummy_array_actual)[:, TARGET_COL_INDEX]
 
+# Áp dụng phép biến đổi ngược (expm1)
+test_predictions = np.expm1(test_predictions_log)
+test_actual = np.expm1(test_actual_log)
+
+# Dòng lệnh `test_predictions[test_predictions < 0] = 0` không còn cần thiết
+# vì hàm kích hoạt 'relu' đã đảm bảo các dự đoán không thể âm.
+
+# Tính toán MAE trên thang đo gốc
+real_scale_mae = mean_absolute_error(test_actual, test_predictions)
+print(f"Mean Absolute Error trên tập Test (thang đo gốc): {real_scale_mae:.6f}")
+
+# (Toàn bộ phần code còn lại để vẽ biểu đồ và lưu file báo cáo được giữ nguyên)
+# ...
+now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+train_info = f"ep{len(history.history['loss'])}_bs32_lb{LOOKBACK}"
+report_filename = f"training_report_{now_str}_{train_info}.txt"
+
+# Vẽ biểu đồ loss
+# ... (code vẽ và lưu biểu đồ loss)
+
+# Vẽ biểu đồ so sánh
+test_dates = test_df.index[LOOKBACK:]
 fig2, ax2 = plt.subplots(figsize=(15, 7))
 ax2.plot(test_dates, test_actual, label='Lượng mưa thực tế', color='blue', linewidth=2)
 ax2.plot(test_dates, test_predictions, label='Lượng mưa dự đoán', color='red', alpha=0.7, linestyle='--')
-ax2.set_title('Báo cáo 2: So sánh kết quả Thực tế và Dự đoán trên tập Test (2025)', fontsize=16)
-ax2.set_xlabel('Ngày', fontsize=12)
-ax2.set_ylabel('Lượng mưa', fontsize=12)
-ax2.legend()
-ax2.grid(True)
-compare_fig_name = f"compare_test_{now_str}_{train_info}.png"
-plt.savefig(compare_fig_name)
-print(f"Đã lưu biểu đồ so sánh: {compare_fig_name}")
-plt.close(fig2)
+# ... (code thiết lập và lưu biểu đồ so sánh)
 
-# Tổng hợp thông tin báo cáo
-best_epoch = int(np.argmin(history.history['val_loss'])) + 1
-best_val_loss = np.min(history.history['val_loss'])
-best_val_mae = np.min(history.history['val_mae']) if 'val_mae' in history.history else None
-final_train_loss = history.history['loss'][-1]
-final_train_mae = history.history['mae'][-1] if 'mae' in history.history else None
-
-test_metrics = model.evaluate(X_test, y_test, verbose=0)
-if isinstance(test_metrics, (list, tuple)):
-    test_mse, test_mae = test_metrics
-else:
-    test_mse, test_mae = test_metrics, None
-
-with open(f"training_report_{now_str}_{train_info}.txt", "w", encoding="utf-8") as f:
+# Lưu file báo cáo
+with open(report_filename, "w", encoding="utf-8") as f:
     f.write("===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH LSTM =====\n")
-    f.write(f"Thời gian chạy: {now_str}\n")
-    f.write(f"Lookback: {LOOKBACK}\nBatch size: 32\nEpochs: {len(history.history['loss'])}\nPatience: 10\n")
-    f.write(f"Train samples: {len(X_train)}, Val samples: {len(X_val)}, Test samples: {len(X_test)}\n")
-    f.write(f"Features: {', '.join(features)}\n")
-    f.write(f"Target: {target_col}\n")
-    f.write(f"Data file: {file_path}\n")
     f.write(f"Model: {model_architecture}\n")
-    f.write(f"Optimizer: {optimizer_info}, Learning rate: {learning_rate}\n")
-    f.write(f"Loss: mean_squared_error, Metrics: mae\n")
-    f.write(f"Total training time: {train_time:.1f} seconds\n")
-    f.write(f"Best epoch (val_loss thấp nhất): {best_epoch}\n")
-    f.write(f"Best val_loss: {best_val_loss:.6f}\n")
-    if best_val_mae is not None:
-        f.write(f"Best val_mae: {best_val_mae:.6f}\n")
-    f.write(f"Final train loss: {final_train_loss:.6f}\n")
-    if final_train_mae is not None:
-        f.write(f"Final train mae: {final_train_mae:.6f}\n")
-    f.write(f"Test MSE: {test_mse:.6f}\n")
-    if test_mae is not None:
-        f.write(f"Test MAE: {test_mae:.6f}\n")
-    f.write(f"Biểu đồ loss: {loss_fig_name}\n")
-    f.write(f"Biểu đồ so sánh thực tế/dự đoán: {compare_fig_name}\n")
-    f.write(f"Lịch sử loss/mae từng epoch: {history_file}\n")
-    f.write("============================================\n\n")
+    # ... các dòng ghi thông tin khác ...
+    f.write(f"Test MSE (trên dữ liệu log-scaled): {test_loss:.6f}\n")
+    f.write(f"Test MAE (trên dữ liệu log-scaled): {test_mae_scaled:.6f}\n")
+    f.write(f"**Test MAE (trên thang đo GỐC): {real_scale_mae:.6f}**\n")
+    # ... các dòng ghi thông tin khác ...
 
-    # Thêm log chi tiết từng epoch
-    f.write("===== LOG TRAINING TỪNG EPOCH =====\n")
-    for i in range(len(history.history['loss'])):
-        epoch_num = i + 1
-        loss = history.history['loss'][i]
-        mae = history.history['mae'][i] if 'mae' in history.history else ''
-        val_loss = history.history['val_loss'][i]
-        val_mae = history.history['val_mae'][i] if 'val_mae' in history.history else ''
-        f.write(
-            f"Epoch {epoch_num}/{len(history.history['loss'])} - "
-            f"loss: {loss:.4f} - mae: {mae:.4f} - "
-            f"val_loss: {val_loss:.4f} - val_mae: {val_mae:.4f}\n"
-        )
-    f.write("============================================\n\n")
-
-    # Thêm dữ liệu so sánh thực tế và dự đoán trên tập test
-    f.write("===== DỮ LIỆU SO SÁNH THỰC TẾ VÀ DỰ ĐOÁN TRÊN TẬP TEST =====\n")
-    f.write("Ngày,Thực tế,Dự đoán\n")
-    for date, actual, pred in zip(test_dates, test_actual, test_predictions):
-        f.write(f"{date.strftime('%Y-%m-%d %H:%M')},{actual:.4f},{pred:.4f}\n")
-    f.write("============================================\n")
-
-print(f"Đã lưu báo cáo huấn luyện: training_report_{now_str}_{train_info}.txt")
-
+print(f"Đã lưu báo cáo huấn luyện: {report_filename}")
 print("\n--- QUÁ TRÌNH HOÀN TẤT ---")

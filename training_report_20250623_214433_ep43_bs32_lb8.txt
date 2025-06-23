@@ -1,0 +1,5 @@
+===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH LSTM =====
+Model: LSTM(64) + Dropout(0.2) + Dense(1, activation='relu') + LogTransform
+Test MSE (trên dữ liệu log-scaled): 0.004942
+Test MAE (trên dữ liệu log-scaled): 0.026314
+**Test MAE (trên thang đo GỐC): 0.141521**
