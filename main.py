@@ -13,6 +13,7 @@ import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
 from keras.callbacks import EarlyStopping
+from keras.optimizers import Adam
 import datetime
 import time
 import csv
@@ -94,7 +95,7 @@ model = Sequential([
     # *** THAY ĐỔI CUỐI CÙNG: Thêm hàm kích hoạt 'relu' để đảm bảo đầu ra không âm ***
     Dense(1, activation='relu')
 ])
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
 model.summary()
 model_architecture = "LSTM(64) + Dropout(0.2) + Dense(1, activation='relu') + LogTransform"
 optimizer_info = "Adam"
@@ -112,6 +113,14 @@ history = model.fit(
     callbacks=[early_stopping], verbose=1
 )
 train_time = time.time() - start_time
+
+now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+train_info = f"ep{len(history.history['loss'])}_bs32_lb{LOOKBACK}"
+
+# Lưu lại mô hình đã train với tên chứa thông tin thời gian và cấu hình train
+model_filename = f"lstm_model_{now_str}_{train_info}.h5"
+model.save(model_filename)
+print(f"Đã lưu mô hình vào file: {model_filename}")
 
 # ==============================================================================
 # BƯỚC 7: ĐÁNH GIÁ MÔ HÌNH
@@ -141,8 +150,8 @@ test_dates = test_df.index[LOOKBACK:]
 print("\nBắt đầu Bước 8: Trực quan hóa và báo cáo...")
 
 # Vẽ và lưu biểu đồ loss
-now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-train_info = f"ep{len(history.history['loss'])}_bs32_lb{LOOKBACK}"
+
+
 plt.figure(figsize=(10, 5))
 plt.plot(history.history['loss'], label='Training Loss')
 plt.plot(history.history['val_loss'], label='Validation Loss')
