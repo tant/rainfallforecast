@@ -86,21 +86,25 @@ print(f"Kích thước tập huấn luyện X: {X_train.shape}, y: {y_train.shap
 print("Một vài đặc trưng được tạo ra:", list(X_train.columns[:5]))
 
 # ==============================================================================
-# BƯỚC 4: HUẤN LUYỆN MÔ HÌNH LIGHTGBM
+# BƯỚC 4: HUẤN LUYỆN MÔ HÌNH LIGHTGBM (VỚI THAM SỐ MỚI)
 # ==============================================================================
-print("\nBắt đầu Bước 4: Huấn luyện mô hình LightGBM...")
+print("\nBắt đầu Bước 4: Huấn luyện mô hình LightGBM với tham số mới...")
 
-# Định nghĩa các tham số cho LightGBM
+# *** THAY ĐỔI: Tinh chỉnh lại bộ tham số để mô hình "mạnh dạn" hơn ***
 params = {
-    'objective': 'regression_l1',  # MAE, thường tốt hơn cho dữ liệu có outliers
+    'objective': 'tweedie',            # THAY ĐỔI QUAN TRỌNG: Phù hợp cho dữ liệu có nhiều số 0
+    'tweedie_variance_power': 1.1,     # Tham số cho objective tweedie (1.0-2.0)
     'metric': 'mae',
-    'n_estimators': 1000,          # Số cây tối đa
-    'learning_rate': 0.05,
+    'n_estimators': 2000,              # Tăng số cây tối đa, early stopping sẽ tìm điểm dừng tốt nhất
+    'learning_rate': 0.02,             # Giảm learning rate để mô hình học cẩn thận hơn
     'feature_fraction': 0.8,
     'bagging_fraction': 0.8,
     'bagging_freq': 1,
-    'verbose': -1,                 # Tắt bớt log của LightGBM
-    'n_jobs': -1,                  # Sử dụng tất cả các CPU cores
+    'lambda_l1': 0.1,                  # Thêm một chút regularization
+    'lambda_l2': 0.1,
+    'num_leaves': 50,                  # Tăng độ phức tạp của cây
+    'verbose': -1,
+    'n_jobs': -1,
     'seed': 42,
     'boosting_type': 'gbdt',
 }
