@@ -93,7 +93,7 @@ print("\nBắt đầu Bước 4: Huấn luyện mô hình LightGBM với tham s�
 # *** THAY ĐỔI: Tinh chỉnh lại bộ tham số để mô hình "mạnh dạn" hơn ***
 params = {
     'objective': 'tweedie',            # THAY ĐỔI QUAN TRỌNG: Phù hợp cho dữ liệu có nhiều số 0
-    'tweedie_variance_power': 1.1,     # Tham số cho objective tweedie (1.0-2.0)
+    'tweedie_variance_power': 1.5,     # Tham số cho objective tweedie (1.0-2.0)
     'metric': 'mae',
     'n_estimators': 2000,              # Tăng số cây tối đa, early stopping sẽ tìm điểm dừng tốt nhất
     'learning_rate': 0.02,             # Giảm learning rate để mô hình học cẩn thận hơn

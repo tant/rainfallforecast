@@ -37,6 +37,20 @@ Biểu đồ feature importance: feature_importance_20250623_233745_lgbm_rounds4
 Biểu đồ so sánh thực tế/dự đoán: compare_test_20250623_233745_lgbm_rounds461_lr0.02_lb8.png
 ==================================================
 
+--- Nhận xét ---
+Phân Tích Biểu Đồ Huấn Luyện
+Học Sâu và Ổn Định Hơn: So với lần chạy LightGBM trước (~45 vòng lặp), lần này mô hình đã học được trong khoảng 450 vòng lặp trước khi hội tụ. Đường loss giảm một cách rất mượt mà và ổn định.
+Diễn giải: Điều này cho thấy các tham số mới (đặc biệt là learning_rate thấp hơn và hàm mục tiêu tweedie) đã thực sự phát huy tác dụng. Chúng đã giúp mô hình học một cách cẩn thận, sâu hơn và tìm ra được các quy luật phức tạp hơn trong dữ liệu thay vì dừng lại quá sớm. Về mặt quá trình huấn luyện, đây là một sự cải thiện vượt bậc.
+
+Biểu đồ So sánh Thực tế và Dự đoán (Báo cáo 3):
+
+Thành Công Vượt Bậc: Mô hình LightGBM giờ đây đã dự báo được chính xác thời điểm xảy ra các cơn mưa, kể cả các đỉnh mưa lớn và các sự kiện mưa nhỏ. Đường dự đoán màu đỏ không còn đi ngang mà đã bám rất sát theo nhịp điệu của dữ liệu thực tế. Đây là một sự cải thiện khổng lồ so với lần chạy trước.
+Thách Thức Cuối Cùng: Thách thức duy nhất còn lại là độ lớn của dự báo. Mô hình vẫn dự báo các đỉnh mưa thấp hơn so với thực tế (ví dụ: đỉnh 12mm được dự báo khoảng 2mm). Tuy nhiên, việc nó đã "dám" nhảy vọt lên mức 2mm thay vì 0.2mm như trước là một tiến bộ lớn.
+
+Biểu đồ Mức độ quan trọng của Đặc trưng (Báo cáo 2):
+
+Câu Trả Lời Rõ Ràng: Biểu đồ này xác nhận tại sao mô hình lại tốt hơn. Nó không còn chỉ dựa vào Rainfall_t-1 một cách mù quáng. Mô hình đã bắt đầu học các quy luật phức tạp và nhận thấy rằng các yếu tố như Temperature và Pressure ở các thời điểm khác nhau (t-7, t-3, t-8) cũng đóng vai trò quan trọng. Chiến lược tinh chỉnh tham số để buộc mô hình học sâu hơn đã hoàn toàn thành công.
+
 --- LỊCH SỬ MAE TRÊN VALIDATION QUA CÁC EPOCH ---
 Epoch 1: val_mae = 0.214259
 Epoch 2: val_mae = 0.212629
