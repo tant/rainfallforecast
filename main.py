@@ -103,8 +103,9 @@ history = model.fit(
 
 # Bước 7: Đánh giá mô hình
 print("\nBắt đầu Bước 7: Đánh giá mô hình trên tập Test...")
-test_loss = model.evaluate(X_test, y_test, verbose=0)
+test_loss, test_mae = model.evaluate(X_test, y_test, verbose=0)
 print(f"Mean Squared Error trên tập Test (dữ liệu đã scale): {test_loss:.6f}")
+print(f"Mean Absolute Error trên tập Test (dữ liệu đã scale): {test_mae:.6f}")
 
 
 # ==============================================================================
