@@ -11,6 +11,7 @@ import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
 from keras.callbacks import EarlyStopping
+import datetime
 
 # ==============================================================================
 # BƯỚC 1: TẢI VÀ CHUẨN BỊ DỮ LIỆU
@@ -56,7 +57,7 @@ test_df = df[df.index.year == 2025]
 
 # Bước 3: Chuẩn hóa dữ liệu
 print("\nBắt đầu Bước 3: Chuẩn hóa dữ liệu...")
-features = ['Temperature', 'Humidity', 'Pressure']
+features = ['Temperature', 'Humidity', 'Pressure', 'Rainfall']
 target_col = 'Rainfall'
 scaler = MinMaxScaler()
 scaler.fit(train_df[features])
@@ -78,6 +79,8 @@ X_train, y_train = create_sequences(train_scaled, LOOKBACK, TARGET_COL_INDEX)
 X_val, y_val = create_sequences(val_scaled, LOOKBACK, TARGET_COL_INDEX)
 X_test, y_test = create_sequences(test_scaled, LOOKBACK, TARGET_COL_INDEX)
 
+# print("Các thiết bị GPU khả dụng:", tf.config.list_physical_devices('GPU'))
+
 # Bước 5: Xây dựng mô hình
 print("\nBắt đầu Bước 5: Xây dựng mô hình LSTM...")
 n_features = X_train.shape[2]
@@ -86,12 +89,12 @@ model = Sequential([
     Dropout(0.2),
     Dense(1)
 ])
-model.compile(optimizer='adam', loss='mean_squared_error')
+model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
 model.summary()
 
 # Bước 6: Huấn luyện mô hình
 print("\nBắt đầu Bước 6: Huấn luyện mô hình...")
-early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1)
 history = model.fit(
     X_train, y_train,
     epochs=100, batch_size=32, validation_data=(X_val, y_val),
@@ -109,6 +112,10 @@ print(f"Mean Squared Error trên tập Test (dữ liệu đã scale): {test_loss
 # ==============================================================================
 print("\nBắt đầu Bước 8: Trực quan hóa kết quả...")
 
+# Tạo chuỗi thông tin cho tên file: ngày giờ, số epoch, batch size, lookback, v.v.
+now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+train_info = f"ep{len(history.history['loss'])}_bs32_lb{LOOKBACK}"
+
 # Report 1: Biểu đồ Training Loss và Validation Loss
 plt.style.use('seaborn-v0_8-whitegrid')
 fig1, ax1 = plt.subplots(figsize=(12, 6))
@@ -118,28 +125,21 @@ ax1.set_title('Báo cáo 1: Diễn biến Training & Validation Loss', fontsize=
 ax1.set_xlabel('Epoch', fontsize=12)
 ax1.set_ylabel('Loss (Mean Squared Error)', fontsize=12)
 ax1.legend()
-plt.show()
+loss_fig_name = f"loss_curve_{now_str}_{train_info}.png"
+plt.savefig(loss_fig_name)
+print(f"Đã lưu biểu đồ loss: {loss_fig_name}")
+plt.close(fig1)
 
 # Report 2: So sánh giá trị Thực tế và Dự đoán trên tập Test
-# Lấy dự đoán từ mô hình (dữ liệu vẫn đang ở dạng scale 0-1)
 test_predictions_scaled = model.predict(X_test)
-
-# Tạo một array rỗng có cùng số cột như lúc scale để thực hiện inverse_transform
 dummy_array = np.zeros(shape=(len(test_predictions_scaled), n_features))
-# Điền giá trị dự đoán vào đúng cột 'Rainfall'
 dummy_array[:, TARGET_COL_INDEX] = test_predictions_scaled.flatten()
-# Thực hiện inverse transform để đưa về giá trị gốc
 test_predictions = scaler.inverse_transform(dummy_array)[:, TARGET_COL_INDEX]
-
-# Lấy giá trị thực tế (y_test) và inverse_transform tương tự
 dummy_array_actual = np.zeros(shape=(len(y_test), n_features))
 dummy_array_actual[:, TARGET_COL_INDEX] = y_test.flatten()
 test_actual = scaler.inverse_transform(dummy_array_actual)[:, TARGET_COL_INDEX]
-
-# Lấy ra đúng các ngày tháng của tập test để vẽ biểu đồ
 test_dates = test_df.index[LOOKBACK:]
 
-# Vẽ biểu đồ
 fig2, ax2 = plt.subplots(figsize=(15, 7))
 ax2.plot(test_dates, test_actual, label='Lượng mưa thực tế', color='blue', linewidth=2)
 ax2.plot(test_dates, test_predictions, label='Lượng mưa dự đoán', color='red', alpha=0.7, linestyle='--')
@@ -148,6 +148,42 @@ ax2.set_xlabel('Ngày', fontsize=12)
 ax2.set_ylabel('Lượng mưa', fontsize=12)
 ax2.legend()
 ax2.grid(True)
-plt.show()
+compare_fig_name = f"compare_test_{now_str}_{train_info}.png"
+plt.savefig(compare_fig_name)
+print(f"Đã lưu biểu đồ so sánh: {compare_fig_name}")
+plt.close(fig2)
+
+# Tổng hợp thông tin báo cáo
+best_epoch = int(np.argmin(history.history['val_loss'])) + 1
+best_val_loss = np.min(history.history['val_loss'])
+best_val_mae = np.min(history.history['val_mae']) if 'val_mae' in history.history else None
+final_train_loss = history.history['loss'][-1]
+final_train_mae = history.history['mae'][-1] if 'mae' in history.history else None
+
+test_metrics = model.evaluate(X_test, y_test, verbose=0)
+if isinstance(test_metrics, (list, tuple)):
+    test_mse, test_mae = test_metrics
+else:
+    test_mse, test_mae = test_metrics, None
+
+with open(f"training_report_{now_str}_{train_info}.txt", "w", encoding="utf-8") as f:
+    f.write("===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH LSTM =====\n")
+    f.write(f"Thời gian chạy: {now_str}\n")
+    f.write(f"Lookback: {LOOKBACK}\nBatch size: 32\nEpochs: {len(history.history['loss'])}\nPatience: 10\n")
+    f.write(f"Best epoch (val_loss thấp nhất): {best_epoch}\n")
+    f.write(f"Best val_loss: {best_val_loss:.6f}\n")
+    if best_val_mae is not None:
+        f.write(f"Best val_mae: {best_val_mae:.6f}\n")
+    f.write(f"Final train loss: {final_train_loss:.6f}\n")
+    if final_train_mae is not None:
+        f.write(f"Final train mae: {final_train_mae:.6f}\n")
+    f.write(f"Test MSE: {test_mse:.6f}\n")
+    if test_mae is not None:
+        f.write(f"Test MAE: {test_mae:.6f}\n")
+    f.write(f"Biểu đồ loss: {loss_fig_name}\n")
+    f.write(f"Biểu đồ so sánh thực tế/dự đoán: {compare_fig_name}\n")
+    f.write("============================================\n")
+
+print(f"Đã lưu báo cáo huấn luyện: training_report_{now_str}_{train_info}.txt")
 
 print("\n--- QUÁ TRÌNH HOÀN TẤT ---")
