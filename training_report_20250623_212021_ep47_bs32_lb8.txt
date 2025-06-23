@@ -1,0 +1,25 @@
+===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH LSTM =====
+Thời gian chạy: 20250623_212021
+Lookback: 8
+Batch size: 32
+Epochs: 47
+Patience: 10
+Train samples: 11400, Val samples: 2872, Test samples: 1160
+Features: Temperature, Humidity, Pressure, Rainfall
+Target: Rainfall
+Data file: weather.csv
+Model: LSTM(64) + Dropout(0.2) + Dense(1)
+Optimizer: Adam, Learning rate: 0.001
+Loss: mean_squared_error, Metrics: mae
+Total training time: 191.4 seconds
+Best epoch (val_loss thấp nhất): 37
+Best val_loss: 0.002100
+Best val_mae: 0.015464
+Final train loss: 0.001918
+Final train mae: 0.017822
+Test MSE: 0.000715
+Test MAE: 0.009098
+Biểu đồ loss: loss_curve_20250623_212021_ep47_bs32_lb8.png
+Biểu đồ so sánh thực tế/dự đoán: compare_test_20250623_212021_ep47_bs32_lb8.png
+Lịch sử loss/mae từng epoch: history_20250623_212021_ep47_bs32_lb8.csv
+============================================

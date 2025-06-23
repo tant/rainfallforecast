@@ -1,0 +1,16 @@
+===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH LSTM =====
+Thời gian chạy: 20250623_210527
+Lookback: 8
+Batch size: 32
+Epochs: 59
+Patience: 10
+Best epoch (val_loss thấp nhất): 49
+Best val_loss: 0.002093
+Best val_mae: 0.014901
+Final train loss: 0.001888
+Final train mae: 0.017684
+Test MSE: 0.000721
+Test MAE: 0.009673
+Biểu đồ loss: loss_curve_20250623_210527_ep59_bs32_lb8.png
+Biểu đồ so sánh thực tế/dự đoán: compare_test_20250623_210527_ep59_bs32_lb8.png
+============================================

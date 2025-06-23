@@ -12,6 +12,8 @@ from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
 from keras.callbacks import EarlyStopping
 import datetime
+import time
+import csv
 
 # ==============================================================================
 # BƯỚC 1: TẢI VÀ CHUẨN BỊ DỮ LIỆU
@@ -92,14 +94,38 @@ model = Sequential([
 model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
 model.summary()
 
+# Lưu thông tin kiến trúc mô hình
+model_architecture = "LSTM(64) + Dropout(0.2) + Dense(1)"
+optimizer_info = "Adam"
+learning_rate = 0.001  # Nếu bạn chỉnh learning rate, hãy cập nhật giá trị này
+
 # Bước 6: Huấn luyện mô hình
 print("\nBắt đầu Bước 6: Huấn luyện mô hình...")
 early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1)
+start_time = time.time()
 history = model.fit(
     X_train, y_train,
     epochs=100, batch_size=32, validation_data=(X_val, y_val),
     callbacks=[early_stopping], verbose=1
 )
+train_time = time.time() - start_time
+
+# Lưu lại dữ liệu train/val loss/mae theo từng epoch
+history_file = f"history_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_ep{len(history.history['loss'])}_bs32_lb{LOOKBACK}.csv"
+with open(history_file, "w", newline='', encoding="utf-8") as csvfile:
+    writer = csv.writer(csvfile)
+    header = ["epoch", "loss", "mae", "val_loss", "val_mae"]
+    writer.writerow(header)
+    for i in range(len(history.history['loss'])):
+        row = [
+            i+1,
+            history.history['loss'][i],
+            history.history['mae'][i] if 'mae' in history.history else '',
+            history.history['val_loss'][i],
+            history.history['val_mae'][i] if 'val_mae' in history.history else ''
+        ]
+        writer.writerow(row)
+print(f"Đã lưu dữ liệu loss/mae từng epoch: {history_file}")
 
 # Bước 7: Đánh giá mô hình
 print("\nBắt đầu Bước 7: Đánh giá mô hình trên tập Test...")
@@ -171,6 +197,14 @@ with open(f"training_report_{now_str}_{train_info}.txt", "w", encoding="utf-8") 
     f.write("===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH LSTM =====\n")
     f.write(f"Thời gian chạy: {now_str}\n")
     f.write(f"Lookback: {LOOKBACK}\nBatch size: 32\nEpochs: {len(history.history['loss'])}\nPatience: 10\n")
+    f.write(f"Train samples: {len(X_train)}, Val samples: {len(X_val)}, Test samples: {len(X_test)}\n")
+    f.write(f"Features: {', '.join(features)}\n")
+    f.write(f"Target: {target_col}\n")
+    f.write(f"Data file: {file_path}\n")
+    f.write(f"Model: {model_architecture}\n")
+    f.write(f"Optimizer: {optimizer_info}, Learning rate: {learning_rate}\n")
+    f.write(f"Loss: mean_squared_error, Metrics: mae\n")
+    f.write(f"Total training time: {train_time:.1f} seconds\n")
     f.write(f"Best epoch (val_loss thấp nhất): {best_epoch}\n")
     f.write(f"Best val_loss: {best_val_loss:.6f}\n")
     if best_val_mae is not None:
@@ -183,6 +217,29 @@ with open(f"training_report_{now_str}_{train_info}.txt", "w", encoding="utf-8") 
         f.write(f"Test MAE: {test_mae:.6f}\n")
     f.write(f"Biểu đồ loss: {loss_fig_name}\n")
     f.write(f"Biểu đồ so sánh thực tế/dự đoán: {compare_fig_name}\n")
+    f.write(f"Lịch sử loss/mae từng epoch: {history_file}\n")
+    f.write("============================================\n\n")
+
+    # Thêm log chi tiết từng epoch
+    f.write("===== LOG TRAINING TỪNG EPOCH =====\n")
+    for i in range(len(history.history['loss'])):
+        epoch_num = i + 1
+        loss = history.history['loss'][i]
+        mae = history.history['mae'][i] if 'mae' in history.history else ''
+        val_loss = history.history['val_loss'][i]
+        val_mae = history.history['val_mae'][i] if 'val_mae' in history.history else ''
+        f.write(
+            f"Epoch {epoch_num}/{len(history.history['loss'])} - "
+            f"loss: {loss:.4f} - mae: {mae:.4f} - "
+            f"val_loss: {val_loss:.4f} - val_mae: {val_mae:.4f}\n"
+        )
+    f.write("============================================\n\n")
+
+    # Thêm dữ liệu so sánh thực tế và dự đoán trên tập test
+    f.write("===== DỮ LIỆU SO SÁNH THỰC TẾ VÀ DỰ ĐOÁN TRÊN TẬP TEST =====\n")
+    f.write("Ngày,Thực tế,Dự đoán\n")
+    for date, actual, pred in zip(test_dates, test_actual, test_predictions):
+        f.write(f"{date.strftime('%Y-%m-%d %H:%M')},{actual:.4f},{pred:.4f}\n")
     f.write("============================================\n")
 
 print(f"Đã lưu báo cáo huấn luyện: training_report_{now_str}_{train_info}.txt")
