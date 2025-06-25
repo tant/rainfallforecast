@@ -98,14 +98,14 @@ model = Sequential([
     GRU(units=32, recurrent_dropout=0.25),
     Dropout(0.3),
     Dense(16, activation='relu'),  # Thêm lớp Dense trung gian
-    Dense(1, activation='relu')
+    Dense(1, activation='softplus')  # Đổi activation từ 'relu' sang
 ])
 
 model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
 model.summary()
 
 # Cập nhật lại thông tin kiến trúc để lưu vào báo cáo
-model_architecture = "GRU(64,recurrent_dropout=0.25,return_seq=True) + Dropout(0.3) + GRU(32,recurrent_dropout=0.25) + Dropout(0.3) + Dense(16,relu) + Dense(1,relu) + LogTransform"
+model_architecture = "GRU(64,recurrent_dropout=0.25,return_seq=True) + Dropout(0.3) + GRU(32,recurrent_dropout=0.25) + Dropout(0.3) + Dense(16,relu) + Dense(1,softplus) + LogTransform"
 optimizer_info = "Adam"
 learning_rate = 0.001
 
@@ -140,6 +140,7 @@ print(f"Mean Absolute Error trên tập Test (dữ liệu log-scaled): {test_mae
 
 # Tính toán dự đoán và giá trị thực tế trên tập test
 test_predictions_scaled = model.predict(X_test)
+test_predictions_scaled = np.maximum(0, test_predictions_scaled) # Áp dụng max(0, prediction) để xử lý giá trị âm
 dummy_array = np.zeros(shape=(len(test_predictions_scaled), n_features))
 dummy_array[:, TARGET_COL_INDEX] = test_predictions_scaled.flatten()
 test_predictions_log = scaler.inverse_transform(dummy_array)[:, TARGET_COL_INDEX]
