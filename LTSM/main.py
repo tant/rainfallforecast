@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
@@ -134,8 +134,18 @@ print(f"Đã lưu mô hình vào file: {model_filename}")
 # ==============================================================================
 print("\nBắt đầu Bước 7: Đánh giá mô hình trên tập Test...")
 test_loss, test_mae_scaled = model.evaluate(X_test, y_test, verbose=0)
+test_rmse_scaled = np.sqrt(test_loss)  # RMSE = sqrt(MSE)
+
+# Tính RRSE trên dữ liệu log-scaled
+test_mse = test_loss
+mean_y_test = np.mean(y_test)
+var_y_test = np.sum((y_test - mean_y_test) ** 2)
+test_rrse_scaled = np.sqrt(test_mse / (var_y_test + 1e-10))  # Thêm 1e-10 để tránh chia cho 0
+
 print(f"Mean Squared Error trên tập Test (dữ liệu log-scaled): {test_loss:.6f}")
 print(f"Mean Absolute Error trên tập Test (dữ liệu log-scaled): {test_mae_scaled:.6f}")
+print(f"Root Mean Squared Error trên tập Test (dữ liệu log-scaled): {test_rmse_scaled:.6f}")
+print(f"Root Relative Squared Error trên tập Test (dữ liệu log-scaled): {test_rrse_scaled:.6f}")
 
 # Tính toán dự đoán và giá trị thực tế trên tập test (phải làm trước khi vẽ và báo cáo)
 test_predictions_scaled = model.predict(X_test)
@@ -150,6 +160,19 @@ test_actual_log = scaler.inverse_transform(dummy_array_actual)[:, TARGET_COL_IND
 test_predictions = np.expm1(test_predictions_log)
 test_actual = np.expm1(test_actual_log)
 test_dates = test_df.index[LOOKBACK:]
+
+# Tính MAE, RMSE và RRSE trên thang đo gốc
+real_scale_mae = mean_absolute_error(test_actual, test_predictions)
+real_scale_rmse = np.sqrt(mean_squared_error(test_actual, test_predictions))
+real_scale_mse = mean_squared_error(test_actual, test_predictions)
+mean_test_actual = np.mean(test_actual)
+var_test_actual = np.sum((test_actual - mean_test_actual) ** 2)
+real_scale_rrse = np.sqrt(real_scale_mse / (var_test_actual + 1e-10))  # Thêm 1e-10 để tránh chia cho 0
+
+print(f"\nKết quả trên thang đo gốc:")
+print(f"Mean Absolute Error trên tập Test (thang đo gốc): {real_scale_mae:.6f}")
+print(f"Root Mean Squared Error trên tập Test (thang đo gốc): {real_scale_rmse:.6f}")
+print(f"Root Relative Squared Error: {real_scale_rrse:.6f}")
 
 # ==============================================================================
 # BƯỚC 8: TRỰC QUAN HÓA VÀ BÁO CÁO
@@ -236,8 +259,15 @@ with open(report_filename, "w", encoding="utf-8") as f:
     f.write(f"Final train loss: {final_train_loss:.6f}\n")
     if final_train_mae is not None:
         f.write(f"Final train mae: {final_train_mae:.6f}\n")
+    f.write(f"\nKết quả trên tập Test (log-scaled):\n")
     f.write(f"Test MSE: {test_loss:.6f}\n")
     f.write(f"Test MAE: {test_mae_scaled:.6f}\n")
+    f.write(f"Test RMSE: {test_rmse_scaled:.6f}\n")
+    f.write(f"Test RRSE: {test_rrse_scaled:.6f}\n")
+    f.write(f"\nKết quả trên tập Test (thang đo gốc):\n")
+    f.write(f"Test MAE: {real_scale_mae:.6f}\n")
+    f.write(f"Test RMSE: {real_scale_rmse:.6f}\n")
+    f.write(f"Test RRSE: {real_scale_rrse:.6f}\n")
     f.write(f"Biểu đồ loss: {loss_fig_name}\n")
     f.write(f"Biểu đồ so sánh thực tế/dự đoán: {compare_fig_name}\n")
     f.write(f"Lịch sử loss/mae từng epoch: {history_file}\n")
