@@ -101,13 +101,13 @@ model = Sequential([
     Dense(1, activation='softplus')  # Đổi activation từ 'relu' sang
 ])
 
-model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
+model.compile(optimizer=Adam(learning_rate=0.0005), loss='mean_squared_error', metrics=['mae'])
 model.summary()
 
 # Cập nhật lại thông tin kiến trúc để lưu vào báo cáo
 model_architecture = "GRU(64,recurrent_dropout=0.25,return_seq=True) + Dropout(0.3) + GRU(32,recurrent_dropout=0.25) + Dropout(0.3) + Dense(16,relu) + Dense(1,softplus) + LogTransform"
 optimizer_info = "Adam"
-learning_rate = 0.001
+learning_rate = 0.0005
 
 # ==============================================================================
 # BƯỚC 6: HUẤN LUYỆN MÔ HÌNH
