@@ -135,8 +135,17 @@ test_predictions[test_predictions < 0] = 0
 # Tính toán sai số
 mse_real = mean_squared_error(test_actual, test_predictions)
 mae_real = mean_absolute_error(test_actual, test_predictions)
+rmse_real = np.sqrt(mse_real)
+
+# Tính RRSE
+mean_actual = np.mean(test_actual)
+rrse_real = np.sqrt(np.sum((test_actual - test_predictions) ** 2) / np.sum((test_actual - mean_actual) ** 2))
+
+# In kết quả
 print(f"Mean Squared Error trên tập Test (thang đo gốc): {mse_real:.6f}")
 print(f"Mean Absolute Error trên tập Test (thang đo gốc): {mae_real:.6f}")
+print(f"Root Mean Squared Error trên tập Test: {rmse_real:.6f}")
+print(f"Root Relative Squared Error trên tập Test: {rrse_real:.6f}")
 
 # ==============================================================================
 # BƯỚC 6: LƯU TRỮ MÔ HÌNH
@@ -222,7 +231,9 @@ try:
         f.write(f"Best score (val_mae): {min(val_mae):.6f}\n\n")
         f.write(f"--- KẾT QUẢ ĐÁNH GIÁ TRÊN TẬP TEST (THANG ĐO GỐC) ---\n")
         f.write(f"Test MSE: {mse_real:.6f}\n")
-        f.write(f"Test MAE: {mae_real:.6f}\n\n")
+        f.write(f"Test MAE: {mae_real:.6f}\n")
+        f.write(f"Test RMSE: {rmse_real:.6f}\n")
+        f.write(f"Test RRSE: {rrse_real:.6f}\n\n")
         f.write(f"--- CÁC FILE ĐÃ LƯU ---\n")
         f.write(f"Model đã lưu: {model_filename}\n")
         f.write(f"Biểu đồ evaluation curve: {eval_fig_name}\n")
