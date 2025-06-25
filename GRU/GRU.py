@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import GRU, Dense, Dropout
@@ -202,6 +202,17 @@ with open(history_file, "w", newline='', encoding="utf-8") as csvfile:
 real_scale_mae = mean_absolute_error(test_actual, test_predictions)
 print(f"Mean Absolute Error trên tập Test (thang đo gốc): {real_scale_mae:.6f}")
 
+# Tính RMSE
+rmse = np.sqrt(mean_squared_error(test_actual, test_predictions))
+print(f"Root Mean Squared Error trên tập Test (thang đo gốc): {rmse:.6f}")
+
+# Tính RRSE
+mean_actual = np.mean(test_actual)
+rrse_numerator = np.sum((test_actual - test_predictions) ** 2)
+rrse_denominator = np.sum((test_actual - mean_actual) ** 2)
+rrse = np.sqrt(rrse_numerator / rrse_denominator) if rrse_denominator != 0 else np.nan
+print(f"Root Relative Squared Error trên tập Test (thang đo gốc): {rrse:.6f}")
+
 # Lưu file báo cáo
 report_filename = f"training_report_{now_str}_{train_info}.txt"
 with open(report_filename, "w", encoding="utf-8") as f:
@@ -234,6 +245,9 @@ with open(report_filename, "w", encoding="utf-8") as f:
         f.write(f"Final train mae: {final_train_mae:.6f}\n")
     f.write(f"Test MSE: {test_loss:.6f}\n")
     f.write(f"Test MAE: {test_mae_scaled:.6f}\n")
+    f.write(f"Test MAE (thang gốc): {real_scale_mae:.6f}\n")
+    f.write(f"Test RMSE (thang gốc): {rmse:.6f}\n")
+    f.write(f"Test RRSE (thang gốc): {rrse:.6f}\n")
     f.write(f"Biểu đồ loss: {loss_fig_name}\n")
     f.write(f"Biểu đồ so sánh thực tế/dự đoán: {compare_fig_name}\n")
     f.write(f"Lịch sử loss/mae từng epoch: {history_file}\n")
