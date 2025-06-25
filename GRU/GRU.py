@@ -72,7 +72,7 @@ test_scaled = scaler.transform(test_df[features])
 # BƯỚC 4: TẠO DỮ LIỆU CHUỖI (SEQUENCES)
 # ==============================================================================
 print("\nBắt đầu Bước 4: Tạo dữ liệu chuỗi (sequences)...")
-LOOKBACK = 8
+LOOKBACK = 24
 TARGET_COL_INDEX = features.index(target_col)
 def create_sequences(data, lookback, target_col_index):
     X, y = [], []
@@ -97,6 +97,7 @@ model = Sequential([
     # GRU thứ hai: chỉ trả về kết quả cuối cùng
     GRU(units=32, recurrent_dropout=0.25),
     Dropout(0.3),
+    Dense(16, activation='relu'),  # Thêm lớp Dense trung gian
     Dense(1, activation='relu')
 ])
 
@@ -104,7 +105,7 @@ model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', me
 model.summary()
 
 # Cập nhật lại thông tin kiến trúc để lưu vào báo cáo
-model_architecture = "GRU(64,recurrent_dropout=0.25,return_seq=True) + Dropout(0.3) + GRU(32,recurrent_dropout=0.25) + Dropout(0.3) + Dense(1,relu) + LogTransform"
+model_architecture = "GRU(64,recurrent_dropout=0.25,return_seq=True) + Dropout(0.3) + GRU(32,recurrent_dropout=0.25) + Dropout(0.3) + Dense(16,relu) + Dense(1,relu) + LogTransform"
 optimizer_info = "Adam"
 learning_rate = 0.001
 
@@ -112,11 +113,11 @@ learning_rate = 0.001
 # BƯỚC 6: HUẤN LUYỆN MÔ HÌNH
 # ==============================================================================
 print("\nBắt đầu Bước 6: Huấn luyện mô hình...")
-early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1)
+early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True, verbose=1)
 start_time = time.time()
 history = model.fit(
     X_train, y_train,
-    epochs=100, batch_size=32, validation_data=(X_val, y_val),
+    epochs=200, batch_size=32, validation_data=(X_val, y_val),
     callbacks=[early_stopping], verbose=1
 )
 train_time = time.time() - start_time
@@ -209,7 +210,7 @@ with open(report_filename, "w", encoding="utf-8") as f:
     f.write(f"Lookback: {LOOKBACK}\n")
     f.write(f"Batch size: 32\n")
     f.write(f"Epochs: {len(history.history['loss'])}\n")
-    f.write(f"Patience: 10\n")
+    f.write(f"Patience: 20\n")
     f.write(f"Train samples: {len(X_train)}, Val samples: {len(X_val)}, Test samples: {len(X_test)}\n")
     f.write(f"Features: {', '.join(features)}\n")
     f.write(f"Target: {target_col}\n")
