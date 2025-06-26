@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Mã nguồn huấn luyện mô hình LSTM - Phiên bản cuối cùng.
+Mã nguồn huấn luyện mô hình GRU - Phiên bản dự đoán lượng mưa.
 Tích hợp: Log Transform cho dữ liệu lệch và hàm kích hoạt ReLU cho đầu ra không âm.
 """
 
@@ -11,7 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import tensorflow as tf
 from keras.models import Sequential
-from keras.layers import LSTM, Dense, Dropout
+from keras.layers import GRU, Dense, Dropout
 from keras.callbacks import EarlyStopping
 from keras.optimizers import Adam
 import datetime
@@ -72,7 +72,7 @@ test_scaled = scaler.transform(test_df[features])
 # BƯỚC 4: TẠO DỮ LIỆU CHUỖI (SEQUENCES)
 # ==============================================================================
 print("\nBắt đầu Bước 4: Tạo dữ liệu chuỗi (sequences)...")
-LOOKBACK = 8
+LOOKBACK = 24
 TARGET_COL_INDEX = features.index(target_col)
 def create_sequences(data, lookback, target_col_index):
     X, y = [], []
@@ -85,26 +85,27 @@ X_val, y_val = create_sequences(val_scaled, LOOKBACK, TARGET_COL_INDEX)
 X_test, y_test = create_sequences(test_scaled, LOOKBACK, TARGET_COL_INDEX)
 
 # ==============================================================================
-# BƯỚC 5: XÂY DỰNG MÔ HÌNH (Kiến trúc 2 lớp LSTM)
+# BƯỚC 5: XÂY DỰNG MÔ HÌNH (Kiến trúc 2 lớp GRU)
 # ==============================================================================
-print("\nBắt đầu Bước 5: Xây dựng mô hình LSTM...")
+print("\nBắt đầu Bước 5: Xây dựng mô hình GRU...")
 n_features = X_train.shape[2]
 
 model = Sequential([
-    # LSTM thứ nhất: trả về chuỗi cho lớp sau, có recurrent_dropout
-    LSTM(units=64, recurrent_dropout=0.25, return_sequences=True, input_shape=(LOOKBACK, n_features)),
+    # GRU thứ nhất: trả về chuỗi cho lớp sau, có recurrent_dropout
+    GRU(units=64, recurrent_dropout=0.25, return_sequences=True, input_shape=(LOOKBACK, n_features)),
     Dropout(0.3),
-    # LSTM thứ hai: chỉ trả về kết quả cuối cùng
-    LSTM(units=32, recurrent_dropout=0.25),
+    # GRU thứ hai: chỉ trả về kết quả cuối cùng
+    GRU(units=32, recurrent_dropout=0.25),
     Dropout(0.3),
-    Dense(1, activation='relu')
+    Dense(16, activation='relu'),  # Thêm lớp Dense trung gian
+    Dense(1, activation='softplus')  # Đổi activation từ 'relu' sang
 ])
 
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mae'])
+model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
 model.summary()
 
 # Cập nhật lại thông tin kiến trúc để lưu vào báo cáo
-model_architecture = "LSTM(64,recurrent_dropout=0.25,return_seq=True) + Dropout(0.3) + LSTM(32,recurrent_dropout=0.25) + Dropout(0.3) + Dense(1,relu) + LogTransform"
+model_architecture = "GRU(64,recurrent_dropout=0.25,return_seq=True) + Dropout(0.3) + GRU(32,recurrent_dropout=0.25) + Dropout(0.3) + Dense(16,relu) + Dense(1,softplus) + LogTransform"
 optimizer_info = "Adam"
 learning_rate = 0.001
 
@@ -112,11 +113,11 @@ learning_rate = 0.001
 # BƯỚC 6: HUẤN LUYỆN MÔ HÌNH
 # ==============================================================================
 print("\nBắt đầu Bước 6: Huấn luyện mô hình...")
-early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1)
+early_stopping = EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True, verbose=1)
 start_time = time.time()
 history = model.fit(
     X_train, y_train,
-    epochs=100, batch_size=32, validation_data=(X_val, y_val),
+    epochs=200, batch_size=32, validation_data=(X_val, y_val),
     callbacks=[early_stopping], verbose=1
 )
 train_time = time.time() - start_time
@@ -125,7 +126,7 @@ now_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 train_info = f"ep{len(history.history['loss'])}_bs32_lb{LOOKBACK}"
 
 # Lưu lại mô hình đã train với tên chứa thông tin thời gian và cấu hình train
-model_filename = f"lstm_model_{now_str}_{train_info}.h5"
+model_filename = f"gru_model_{now_str}_{train_info}.h5"
 model.save(model_filename)
 print(f"Đã lưu mô hình vào file: {model_filename}")
 
@@ -134,21 +135,12 @@ print(f"Đã lưu mô hình vào file: {model_filename}")
 # ==============================================================================
 print("\nBắt đầu Bước 7: Đánh giá mô hình trên tập Test...")
 test_loss, test_mae_scaled = model.evaluate(X_test, y_test, verbose=0)
-test_rmse_scaled = np.sqrt(test_loss)  # RMSE = sqrt(MSE)
-
-# Tính RRSE trên dữ liệu log-scaled
-test_mse = test_loss
-mean_y_test = np.mean(y_test)
-var_y_test = np.sum((y_test - mean_y_test) ** 2)
-test_rrse_scaled = np.sqrt(test_mse / (var_y_test + 1e-10))  # Thêm 1e-10 để tránh chia cho 0
-
 print(f"Mean Squared Error trên tập Test (dữ liệu log-scaled): {test_loss:.6f}")
 print(f"Mean Absolute Error trên tập Test (dữ liệu log-scaled): {test_mae_scaled:.6f}")
-print(f"Root Mean Squared Error trên tập Test (dữ liệu log-scaled): {test_rmse_scaled:.6f}")
-print(f"Root Relative Squared Error trên tập Test (dữ liệu log-scaled): {test_rrse_scaled:.6f}")
 
-# Tính toán dự đoán và giá trị thực tế trên tập test (phải làm trước khi vẽ và báo cáo)
+# Tính toán dự đoán và giá trị thực tế trên tập test
 test_predictions_scaled = model.predict(X_test)
+test_predictions_scaled = np.maximum(0, test_predictions_scaled) # Áp dụng max(0, prediction) để xử lý giá trị âm
 dummy_array = np.zeros(shape=(len(test_predictions_scaled), n_features))
 dummy_array[:, TARGET_COL_INDEX] = test_predictions_scaled.flatten()
 test_predictions_log = scaler.inverse_transform(dummy_array)[:, TARGET_COL_INDEX]
@@ -161,27 +153,12 @@ test_predictions = np.expm1(test_predictions_log)
 test_actual = np.expm1(test_actual_log)
 test_dates = test_df.index[LOOKBACK:]
 
-# Tính MAE, RMSE và RRSE trên thang đo gốc
-real_scale_mae = mean_absolute_error(test_actual, test_predictions)
-real_scale_rmse = np.sqrt(mean_squared_error(test_actual, test_predictions))
-real_scale_mse = mean_squared_error(test_actual, test_predictions)
-mean_test_actual = np.mean(test_actual)
-var_test_actual = np.sum((test_actual - mean_test_actual) ** 2)
-real_scale_rrse = np.sqrt(real_scale_mse / (var_test_actual + 1e-10))  # Thêm 1e-10 để tránh chia cho 0
-
-print(f"\nKết quả trên thang đo gốc:")
-print(f"Mean Absolute Error trên tập Test (thang đo gốc): {real_scale_mae:.6f}")
-print(f"Root Mean Squared Error trên tập Test (thang đo gốc): {real_scale_rmse:.6f}")
-print(f"Root Relative Squared Error: {real_scale_rrse:.6f}")
-
 # ==============================================================================
 # BƯỚC 8: TRỰC QUAN HÓA VÀ BÁO CÁO
 # ==============================================================================
 print("\nBắt đầu Bước 8: Trực quan hóa và báo cáo...")
 
 # Vẽ và lưu biểu đồ loss
-
-
 plt.figure(figsize=(10, 5))
 plt.plot(history.history['loss'], label='Training Loss')
 plt.plot(history.history['val_loss'], label='Validation Loss')
@@ -221,24 +198,31 @@ with open(history_file, "w", newline='', encoding="utf-8") as csvfile:
         ]
         writer.writerow(row)
 
-# Report 2: So sánh giá trị Thực tế và Dự đoán trên tập Test
-# Dòng lệnh `test_predictions[test_predictions < 0] = 0` không còn cần thiết
-# vì hàm kích hoạt 'relu' đã đảm bảo các dự đoán không thể âm.
-
 # Tính toán MAE trên thang đo gốc
 real_scale_mae = mean_absolute_error(test_actual, test_predictions)
 print(f"Mean Absolute Error trên tập Test (thang đo gốc): {real_scale_mae:.6f}")
+
+# Tính RMSE
+rmse = np.sqrt(mean_squared_error(test_actual, test_predictions))
+print(f"Root Mean Squared Error trên tập Test (thang đo gốc): {rmse:.6f}")
+
+# Tính RRSE
+mean_actual = np.mean(test_actual)
+rrse_numerator = np.sum((test_actual - test_predictions) ** 2)
+rrse_denominator = np.sum((test_actual - mean_actual) ** 2)
+rrse = np.sqrt(rrse_numerator / rrse_denominator) if rrse_denominator != 0 else np.nan
+print(f"Root Relative Squared Error trên tập Test (thang đo gốc): {rrse:.6f}")
 
 # Lưu file báo cáo
 report_filename = f"training_report_{now_str}_{train_info}.txt"
 with open(report_filename, "w", encoding="utf-8") as f:
     # 1. Thông tin tổng quan
-    f.write("===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH LSTM =====\n")
+    f.write("===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH GRU =====\n")
     f.write(f"Thời gian chạy: {now_str}\n")
     f.write(f"Lookback: {LOOKBACK}\n")
     f.write(f"Batch size: 32\n")
     f.write(f"Epochs: {len(history.history['loss'])}\n")
-    f.write(f"Patience: 10\n")
+    f.write(f"Patience: 20\n")
     f.write(f"Train samples: {len(X_train)}, Val samples: {len(X_val)}, Test samples: {len(X_test)}\n")
     f.write(f"Features: {', '.join(features)}\n")
     f.write(f"Target: {target_col}\n")
@@ -259,15 +243,11 @@ with open(report_filename, "w", encoding="utf-8") as f:
     f.write(f"Final train loss: {final_train_loss:.6f}\n")
     if final_train_mae is not None:
         f.write(f"Final train mae: {final_train_mae:.6f}\n")
-    f.write(f"\nKết quả trên tập Test (log-scaled):\n")
     f.write(f"Test MSE: {test_loss:.6f}\n")
     f.write(f"Test MAE: {test_mae_scaled:.6f}\n")
-    f.write(f"Test RMSE: {test_rmse_scaled:.6f}\n")
-    f.write(f"Test RRSE: {test_rrse_scaled:.6f}\n")
-    f.write(f"\nKết quả trên tập Test (thang đo gốc):\n")
-    f.write(f"Test MAE: {real_scale_mae:.6f}\n")
-    f.write(f"Test RMSE: {real_scale_rmse:.6f}\n")
-    f.write(f"Test RRSE: {real_scale_rrse:.6f}\n")
+    f.write(f"Test MAE (thang gốc): {real_scale_mae:.6f}\n")
+    f.write(f"Test RMSE (thang gốc): {rmse:.6f}\n")
+    f.write(f"Test RRSE (thang gốc): {rrse:.6f}\n")
     f.write(f"Biểu đồ loss: {loss_fig_name}\n")
     f.write(f"Biểu đồ so sánh thực tế/dự đoán: {compare_fig_name}\n")
     f.write(f"Lịch sử loss/mae từng epoch: {history_file}\n")
