@@ -1,0 +1,343 @@
+===== BÁO CÁO HUẤN LUYỆN MÔ HÌNH XGBoost =====
+Thời gian chạy: 20250626_162333
+
+--- THÔNG SỐ THỬ NGHIỆM ---
+Model: XGBoost
+- objective: reg:squarederror
+- eval_metric: mae
+- eta: 0.02
+- max_depth: 7
+- subsample: 0.8
+- colsample_bytree: 0.8
+- lambda: 0.5
+- alpha: 0.5
+- n_estimators: 1000
+- seed: 42
+- n_jobs: -1
+- tree_method: hist
+- early_stopping_rounds: 80
+- validation_indicator_col: validation_0
+Lookback: 6
+Data file: weather.csv
+
+--- KẾT QUẢ HUẤN LUYỆN ---
+Total training time: 0.9 seconds
+Số cây (boosting rounds) đã chạy: 220
+Best score (val_mae): 0.156152
+
+--- KẾT QUẢ ĐÁNH GIÁ TRÊN TẬP TEST (THANG ĐO GỐC) ---
+Test MSE: 0.350875
+Test MAE: 0.154941
+Test RMSE: 0.592347
+Test RRSE: 0.947636
+
+--- CÁC FILE ĐÃ LƯU ---
+Model đã lưu: xgb_model_20250626_162333.json
+Biểu đồ evaluation curve: eval_curve_20250626_162333_xgb_rounds220_lr0.02_lb6.png
+Biểu đồ feature importance: feature_importance_20250626_162333_xgb_rounds220_lr0.02_lb6.png
+Biểu đồ so sánh thực tế/dự đoán: compare_test_20250626_162333_xgb_rounds220_lr0.02_lb6.png
+==================================================
+
+--- LỊCH SỬ MAE TRÊN VALIDATION QUA CÁC EPOCH ---
+Epoch 1: val_mae = 0.214037
+Epoch 2: val_mae = 0.212688
+Epoch 3: val_mae = 0.211242
+Epoch 4: val_mae = 0.209799
+Epoch 5: val_mae = 0.208676
+Epoch 6: val_mae = 0.207383
+Epoch 7: val_mae = 0.206358
+Epoch 8: val_mae = 0.205320
+Epoch 9: val_mae = 0.204062
+Epoch 10: val_mae = 0.202918
+Epoch 11: val_mae = 0.202020
+Epoch 12: val_mae = 0.200948
+Epoch 13: val_mae = 0.199864
+Epoch 14: val_mae = 0.198995
+Epoch 15: val_mae = 0.198007
+Epoch 16: val_mae = 0.197039
+Epoch 17: val_mae = 0.196192
+Epoch 18: val_mae = 0.195528
+Epoch 19: val_mae = 0.194609
+Epoch 20: val_mae = 0.193814
+Epoch 21: val_mae = 0.193108
+Epoch 22: val_mae = 0.192284
+Epoch 23: val_mae = 0.191492
+Epoch 24: val_mae = 0.190632
+Epoch 25: val_mae = 0.189802
+Epoch 26: val_mae = 0.189000
+Epoch 27: val_mae = 0.188246
+Epoch 28: val_mae = 0.187514
+Epoch 29: val_mae = 0.186776
+Epoch 30: val_mae = 0.186115
+Epoch 31: val_mae = 0.185564
+Epoch 32: val_mae = 0.184927
+Epoch 33: val_mae = 0.184443
+Epoch 34: val_mae = 0.183799
+Epoch 35: val_mae = 0.183295
+Epoch 36: val_mae = 0.182740
+Epoch 37: val_mae = 0.182209
+Epoch 38: val_mae = 0.181689
+Epoch 39: val_mae = 0.181298
+Epoch 40: val_mae = 0.180783
+Epoch 41: val_mae = 0.180241
+Epoch 42: val_mae = 0.179755
+Epoch 43: val_mae = 0.179252
+Epoch 44: val_mae = 0.178746
+Epoch 45: val_mae = 0.178424
+Epoch 46: val_mae = 0.177922
+Epoch 47: val_mae = 0.177391
+Epoch 48: val_mae = 0.177008
+Epoch 49: val_mae = 0.176551
+Epoch 50: val_mae = 0.176078
+Epoch 51: val_mae = 0.175719
+Epoch 52: val_mae = 0.175241
+Epoch 53: val_mae = 0.174977
+Epoch 54: val_mae = 0.174534
+Epoch 55: val_mae = 0.174142
+Epoch 56: val_mae = 0.173738
+Epoch 57: val_mae = 0.173344
+Epoch 58: val_mae = 0.172995
+Epoch 59: val_mae = 0.172603
+Epoch 60: val_mae = 0.172330
+Epoch 61: val_mae = 0.171939
+Epoch 62: val_mae = 0.171577
+Epoch 63: val_mae = 0.171198
+Epoch 64: val_mae = 0.170939
+Epoch 65: val_mae = 0.170566
+Epoch 66: val_mae = 0.170258
+Epoch 67: val_mae = 0.169910
+Epoch 68: val_mae = 0.169667
+Epoch 69: val_mae = 0.169367
+Epoch 70: val_mae = 0.169107
+Epoch 71: val_mae = 0.168873
+Epoch 72: val_mae = 0.168645
+Epoch 73: val_mae = 0.168352
+Epoch 74: val_mae = 0.168139
+Epoch 75: val_mae = 0.167822
+Epoch 76: val_mae = 0.167498
+Epoch 77: val_mae = 0.167281
+Epoch 78: val_mae = 0.167031
+Epoch 79: val_mae = 0.166770
+Epoch 80: val_mae = 0.166538
+Epoch 81: val_mae = 0.166302
+Epoch 82: val_mae = 0.166029
+Epoch 83: val_mae = 0.165828
+Epoch 84: val_mae = 0.165596
+Epoch 85: val_mae = 0.165343
+Epoch 86: val_mae = 0.165065
+Epoch 87: val_mae = 0.164929
+Epoch 88: val_mae = 0.164731
+Epoch 89: val_mae = 0.164513
+Epoch 90: val_mae = 0.164363
+Epoch 91: val_mae = 0.164189
+Epoch 92: val_mae = 0.164021
+Epoch 93: val_mae = 0.163850
+Epoch 94: val_mae = 0.163620
+Epoch 95: val_mae = 0.163439
+Epoch 96: val_mae = 0.163307
+Epoch 97: val_mae = 0.163101
+Epoch 98: val_mae = 0.162974
+Epoch 99: val_mae = 0.162845
+Epoch 100: val_mae = 0.162675
+Epoch 101: val_mae = 0.162498
+Epoch 102: val_mae = 0.162330
+Epoch 103: val_mae = 0.162180
+Epoch 104: val_mae = 0.162061
+Epoch 105: val_mae = 0.161977
+Epoch 106: val_mae = 0.161865
+Epoch 107: val_mae = 0.161745
+Epoch 108: val_mae = 0.161622
+Epoch 109: val_mae = 0.161453
+Epoch 110: val_mae = 0.161359
+Epoch 111: val_mae = 0.161251
+Epoch 112: val_mae = 0.161139
+Epoch 113: val_mae = 0.161006
+Epoch 114: val_mae = 0.160837
+Epoch 115: val_mae = 0.160784
+Epoch 116: val_mae = 0.160691
+Epoch 117: val_mae = 0.160604
+Epoch 118: val_mae = 0.160477
+Epoch 119: val_mae = 0.160419
+Epoch 120: val_mae = 0.160375
+Epoch 121: val_mae = 0.160267
+Epoch 122: val_mae = 0.160214
+Epoch 123: val_mae = 0.160191
+Epoch 124: val_mae = 0.160148
+Epoch 125: val_mae = 0.160043
+Epoch 126: val_mae = 0.159907
+Epoch 127: val_mae = 0.159868
+Epoch 128: val_mae = 0.159819
+Epoch 129: val_mae = 0.159692
+Epoch 130: val_mae = 0.159615
+Epoch 131: val_mae = 0.159537
+Epoch 132: val_mae = 0.159358
+Epoch 133: val_mae = 0.159327
+Epoch 134: val_mae = 0.159225
+Epoch 135: val_mae = 0.159150
+Epoch 136: val_mae = 0.159063
+Epoch 137: val_mae = 0.159071
+Epoch 138: val_mae = 0.158975
+Epoch 139: val_mae = 0.158867
+Epoch 140: val_mae = 0.158819
+Epoch 141: val_mae = 0.158718
+Epoch 142: val_mae = 0.158596
+Epoch 143: val_mae = 0.158571
+Epoch 144: val_mae = 0.158504
+Epoch 145: val_mae = 0.158409
+Epoch 146: val_mae = 0.158336
+Epoch 147: val_mae = 0.158292
+Epoch 148: val_mae = 0.158258
+Epoch 149: val_mae = 0.158201
+Epoch 150: val_mae = 0.158182
+Epoch 151: val_mae = 0.158159
+Epoch 152: val_mae = 0.158090
+Epoch 153: val_mae = 0.158018
+Epoch 154: val_mae = 0.157979
+Epoch 155: val_mae = 0.157932
+Epoch 156: val_mae = 0.157873
+Epoch 157: val_mae = 0.157831
+Epoch 158: val_mae = 0.157761
+Epoch 159: val_mae = 0.157742
+Epoch 160: val_mae = 0.157682
+Epoch 161: val_mae = 0.157715
+Epoch 162: val_mae = 0.157716
+Epoch 163: val_mae = 0.157673
+Epoch 164: val_mae = 0.157611
+Epoch 165: val_mae = 0.157541
+Epoch 166: val_mae = 0.157586
+Epoch 167: val_mae = 0.157570
+Epoch 168: val_mae = 0.157529
+Epoch 169: val_mae = 0.157530
+Epoch 170: val_mae = 0.157458
+Epoch 171: val_mae = 0.157444
+Epoch 172: val_mae = 0.157438
+Epoch 173: val_mae = 0.157427
+Epoch 174: val_mae = 0.157436
+Epoch 175: val_mae = 0.157377
+Epoch 176: val_mae = 0.157372
+Epoch 177: val_mae = 0.157404
+Epoch 178: val_mae = 0.157347
+Epoch 179: val_mae = 0.157330
+Epoch 180: val_mae = 0.157281
+Epoch 181: val_mae = 0.157215
+Epoch 182: val_mae = 0.157164
+Epoch 183: val_mae = 0.157111
+Epoch 184: val_mae = 0.157036
+Epoch 185: val_mae = 0.157015
+Epoch 186: val_mae = 0.157017
+Epoch 187: val_mae = 0.157008
+Epoch 188: val_mae = 0.156982
+Epoch 189: val_mae = 0.156954
+Epoch 190: val_mae = 0.156926
+Epoch 191: val_mae = 0.156829
+Epoch 192: val_mae = 0.156819
+Epoch 193: val_mae = 0.156796
+Epoch 194: val_mae = 0.156758
+Epoch 195: val_mae = 0.156741
+Epoch 196: val_mae = 0.156761
+Epoch 197: val_mae = 0.156739
+Epoch 198: val_mae = 0.156701
+Epoch 199: val_mae = 0.156634
+Epoch 200: val_mae = 0.156602
+Epoch 201: val_mae = 0.156567
+Epoch 202: val_mae = 0.156569
+Epoch 203: val_mae = 0.156527
+Epoch 204: val_mae = 0.156466
+Epoch 205: val_mae = 0.156428
+Epoch 206: val_mae = 0.156406
+Epoch 207: val_mae = 0.156333
+Epoch 208: val_mae = 0.156361
+Epoch 209: val_mae = 0.156392
+Epoch 210: val_mae = 0.156356
+Epoch 211: val_mae = 0.156327
+Epoch 212: val_mae = 0.156311
+Epoch 213: val_mae = 0.156272
+Epoch 214: val_mae = 0.156240
+Epoch 215: val_mae = 0.156234
+Epoch 216: val_mae = 0.156241
+Epoch 217: val_mae = 0.156240
+Epoch 218: val_mae = 0.156235
+Epoch 219: val_mae = 0.156195
+Epoch 220: val_mae = 0.156191
+Epoch 221: val_mae = 0.156152
+Epoch 222: val_mae = 0.156202
+Epoch 223: val_mae = 0.156217
+Epoch 224: val_mae = 0.156220
+Epoch 225: val_mae = 0.156258
+Epoch 226: val_mae = 0.156225
+Epoch 227: val_mae = 0.156199
+Epoch 228: val_mae = 0.156205
+Epoch 229: val_mae = 0.156226
+Epoch 230: val_mae = 0.156255
+Epoch 231: val_mae = 0.156260
+Epoch 232: val_mae = 0.156291
+Epoch 233: val_mae = 0.156267
+Epoch 234: val_mae = 0.156255
+Epoch 235: val_mae = 0.156253
+Epoch 236: val_mae = 0.156269
+Epoch 237: val_mae = 0.156242
+Epoch 238: val_mae = 0.156250
+Epoch 239: val_mae = 0.156248
+Epoch 240: val_mae = 0.156265
+Epoch 241: val_mae = 0.156264
+Epoch 242: val_mae = 0.156249
+Epoch 243: val_mae = 0.156233
+Epoch 244: val_mae = 0.156245
+Epoch 245: val_mae = 0.156278
+Epoch 246: val_mae = 0.156238
+Epoch 247: val_mae = 0.156220
+Epoch 248: val_mae = 0.156263
+Epoch 249: val_mae = 0.156251
+Epoch 250: val_mae = 0.156214
+Epoch 251: val_mae = 0.156233
+Epoch 252: val_mae = 0.156225
+Epoch 253: val_mae = 0.156243
+Epoch 254: val_mae = 0.156234
+Epoch 255: val_mae = 0.156236
+Epoch 256: val_mae = 0.156168
+Epoch 257: val_mae = 0.156179
+Epoch 258: val_mae = 0.156214
+Epoch 259: val_mae = 0.156230
+Epoch 260: val_mae = 0.156248
+Epoch 261: val_mae = 0.156220
+Epoch 262: val_mae = 0.156222
+Epoch 263: val_mae = 0.156241
+Epoch 264: val_mae = 0.156286
+Epoch 265: val_mae = 0.156324
+Epoch 266: val_mae = 0.156352
+Epoch 267: val_mae = 0.156338
+Epoch 268: val_mae = 0.156328
+Epoch 269: val_mae = 0.156363
+Epoch 270: val_mae = 0.156332
+Epoch 271: val_mae = 0.156311
+Epoch 272: val_mae = 0.156320
+Epoch 273: val_mae = 0.156346
+Epoch 274: val_mae = 0.156320
+Epoch 275: val_mae = 0.156329
+Epoch 276: val_mae = 0.156344
+Epoch 277: val_mae = 0.156333
+Epoch 278: val_mae = 0.156350
+Epoch 279: val_mae = 0.156370
+Epoch 280: val_mae = 0.156339
+Epoch 281: val_mae = 0.156340
+Epoch 282: val_mae = 0.156330
+Epoch 283: val_mae = 0.156324
+Epoch 284: val_mae = 0.156348
+Epoch 285: val_mae = 0.156364
+Epoch 286: val_mae = 0.156372
+Epoch 287: val_mae = 0.156370
+Epoch 288: val_mae = 0.156435
+Epoch 289: val_mae = 0.156388
+Epoch 290: val_mae = 0.156385
+Epoch 291: val_mae = 0.156359
+Epoch 292: val_mae = 0.156354
+Epoch 293: val_mae = 0.156363
+Epoch 294: val_mae = 0.156378
+Epoch 295: val_mae = 0.156404
+Epoch 296: val_mae = 0.156387
+Epoch 297: val_mae = 0.156361
+Epoch 298: val_mae = 0.156360
+Epoch 299: val_mae = 0.156357
+Epoch 300: val_mae = 0.156330
+Epoch 301: val_mae = 0.156315
+==================================================

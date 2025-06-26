@@ -90,17 +90,17 @@ print("\nBắt đầu Bước 4: Huấn luyện mô hình XGBoost...")
 xgb_params = {
     'objective': 'reg:squarederror',
     'eval_metric': 'mae',
-    'eta': 0.01,              # giảm eta xuống 0.01
-    'max_depth': 5,           # giảm max_depth từ 6 xuống 5
-    'subsample': 0.8,
-    'colsample_bytree': 0.8,
-    'lambda': 1.2,            # tăng lambda từ 0.1 lên 1
-    'alpha': 0.8,             # tăng alpha từ 0.1 lên 0.8
-    'n_estimators': 2000,
+    'eta': 0.02,         
+    'max_depth': 8,         
+    'subsample': 0.9,     
+    'colsample_bytree': 0.8, 
+    'lambda': 0.5,           
+    'alpha': 0.5,            
+    'n_estimators': 1000,
     'seed': 42,
     'n_jobs': -1,
     'tree_method': 'hist',
-    'early_stopping_rounds': 10,
+    'early_stopping_rounds': 100,
     'validation_indicator_col': 'validation_0'
 }
 
