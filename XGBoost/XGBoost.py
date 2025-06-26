@@ -55,7 +55,7 @@ test_df['Rainfall'] = np.log1p(test_df['Rainfall'])
 # BƯỚC 3: TẠO ĐẶC TRƯNG DẠNG BẢNG (LAG FEATURES)
 # ==============================================================================
 print("\nBắt đầu Bước 3: Tạo đặc trưng dạng bảng (Lag Features)...")
-LOOKBACK = 8
+LOOKBACK = 6
 features_to_lag = ['Temperature', 'Humidity', 'Pressure', 'Rainfall']
 target_col = 'Rainfall'
 
@@ -90,12 +90,12 @@ print("\nBắt đầu Bước 4: Huấn luyện mô hình XGBoost...")
 xgb_params = {
     'objective': 'reg:squarederror',
     'eval_metric': 'mae',
-    'eta': 0.02,
-    'max_depth': 6,
+    'eta': 0.01,              # giảm eta xuống 0.01
+    'max_depth': 5,           # giảm max_depth từ 6 xuống 5
     'subsample': 0.8,
     'colsample_bytree': 0.8,
-    'lambda': 0.1,
-    'alpha': 0.1,
+    'lambda': 1.2,            # tăng lambda từ 0.1 lên 1
+    'alpha': 0.8,             # tăng alpha từ 0.1 lên 0.8
     'n_estimators': 2000,
     'seed': 42,
     'n_jobs': -1,
@@ -184,7 +184,7 @@ plt.close(fig1)
 
 # Report 2: Biểu đồ Mức độ quan trọng của Đặc trưng (Feature Importance)
 fig2, ax2 = plt.subplots(figsize=(10, 8))
-xgb.plot_importance(model, ax=ax2, max_num_features=20)
+xgb.plot_importance(model, ax=ax2, max_num_features=20, height=0.8)
 ax2.set_title('Báo cáo 2: 20 Đặc trưng quan trọng nhất', fontsize=16)
 plt.tight_layout()
 feat_imp_fig_name = f"feature_importance_{now_str}_{train_info}.png"
